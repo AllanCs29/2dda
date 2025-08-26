@@ -1,10 +1,8 @@
 name: Build APK
-
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -44,6 +42,18 @@ jobs:
 
       - name: Generate local.properties (SDK path)
         run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      # 👇 NUEVO: crea el debug.keystore en ~/.android
+      - name: Ensure debug keystore (v1+v2)
+        run: |
+          mkdir -p ~/.android
+          if [ ! -f ~/.android/debug.keystore ]; then
+            keytool -genkeypair -v \
+              -keystore ~/.android/debug.keystore \
+              -storepass android -alias androiddebugkey -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
 
       - name: Build Debug APK
         run: ./gradlew --no-daemon clean :app:assembleDebug
